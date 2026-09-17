@@ -1,0 +1,73 @@
+{% extends "admin_base.html" %}
+{% set active_page = "dashboard" %}
+{% block content %}
+<div class="flex flex-wrap items-end justify-between gap-3 mb-6">
+  <div>
+    <h1 class="font-heading font-extrabold text-2xl text-broccoli-800">Buen dia</h1>
+    <p class="text-broccoli-500 text-sm">Resumen de hoy y de la semana en curso ({{ week_label }})</p>
+  </div>
+</div>
+
+<div class="grid sm:grid-cols-3 gap-4 mb-8">
+  <div class="bg-white rounded-2xl shadow-sm border border-broccoli-100 p-5">
+    <p class="text-broccoli-400 text-xs font-semibold uppercase tracking-wide">Empleados activos</p>
+    <p class="font-heading font-extrabold text-3xl text-broccoli-800 mt-1">{{ employee_count }}</p>
+  </div>
+  <div class="bg-white rounded-2xl shadow-sm border border-broccoli-100 p-5">
+    <p class="text-broccoli-400 text-xs font-semibold uppercase tracking-wide">Horas esta semana</p>
+    <p class="font-heading font-extrabold text-3xl text-broccoli-800 mt-1">{{ "%.1f"|format(summary.grand_total_hours) }}</p>
+  </div>
+  <div class="bg-white rounded-2xl shadow-sm border border-broccoli-100 p-5">
+    <p class="text-broccoli-400 text-xs font-semibold uppercase tracking-wide">Pago acumulado</p>
+    <p class="font-heading font-extrabold text-3xl text-broccoli-800 mt-1">{{ format_crc(summary.grand_total_pay) }}</p>
+  </div>
+</div>
+
+<div class="grid lg:grid-cols-2 gap-6">
+  <div class="bg-white rounded-2xl shadow-sm border border-broccoli-100 p-5">
+    <h2 class="font-heading font-bold text-broccoli-800 mb-4">Ahora mismo marcados adentro</h2>
+    {% if open_entries %}
+    <ul class="space-y-3">
+      {% for e in open_entries %}
+      <li class="flex items-center justify-between bg-broccoli-50 rounded-xl px-4 py-3">
+        <div>
+          <p class="font-semibold text-broccoli-800">{{ e.full_name }}</p>
+          <p class="text-broccoli-500 text-xs">Entro a las {{ e.clock_in_time }}</p>
+        </div>
+        <span class="text-broccoli-600 font-mono text-sm">{{ e.elapsed }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-broccoli-400 text-sm">Nadie marcado adentro en este momento.</p>
+    {% endif %}
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border border-broccoli-100 p-5">
+    <h2 class="font-heading font-bold text-broccoli-800 mb-4">Nomina de la semana (vista rapida)</h2>
+    {% if summary.rows %}
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-broccoli-400 text-xs uppercase">
+          <th class="pb-2">Empleado</th>
+          <th class="pb-2 text-right">Horas</th>
+          <th class="pb-2 text-right">Pago</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in summary.rows %}
+        <tr class="border-t border-broccoli-50">
+          <td class="py-2 font-medium text-broccoli-700">{{ row.full_name }}{% if row.open_entry %} <span class="text-irazu-500 text-xs">(adentro)</span>{% endif %}</td>
+          <td class="py-2 text-right">{{ "%.2f"|format(row.total_hours) }}</td>
+          <td class="py-2 text-right">{{ format_crc(row.total_pay) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <a href="/admin/payroll" class="inline-block mt-4 text-broccoli-600 hover:text-broccoli-800 text-sm font-semibold underline">Ver nomina completa y exportar &rarr;</a>
+    {% else %}
+    <p class="text-broccoli-400 text-sm">Todavia no hay marcajes esta semana.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

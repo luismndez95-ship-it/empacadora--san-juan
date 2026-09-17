@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}{{ business_name }} - Marcaje{% endblock %}
+{% block body %}
+<div class="relative flex-1 flex flex-col items-center justify-center volcano-hero overflow-hidden px-4 py-8">
+
+  <svg class="volcano-silhouette" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,400 L0,280 L180,150 L260,210 L420,60 L520,150 L640,90 L760,190 L900,120 L1040,220 L1200,170 L1200,400 Z" fill="#dfeada"/>
+    <path d="M0,400 L0,330 L150,260 L300,320 L460,240 L600,300 L780,230 L950,300 L1100,250 L1200,290 L1200,400 Z" fill="#c7e0c0" opacity="0.8"/>
+  </svg>
+
+  <div class="relative z-10 w-full max-w-md">
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-broccoli-600 text-cauliflower-50 text-3xl font-heading font-extrabold shadow-lg mb-3">ESJ</div>
+      <h1 class="font-heading font-extrabold text-3xl text-broccoli-800">{{ business_name }}</h1>
+      <p class="text-broccoli-600 font-medium text-sm mt-1">San Juan de Chicua &middot; Cartago &middot; a los pies del Irazu</p>
+      <p id="live-clock" class="text-broccoli-500 text-sm mt-2 font-mono"></p>
+    </div>
+
+    <div class="bg-white/90 backdrop-blur rounded-3xl shadow-xl border border-broccoli-100 p-6 sm:p-8">
+      <p class="text-center font-heading font-semibold text-broccoli-800 mb-4">Ingresa tu PIN para marcar</p>
+
+      <div class="flex justify-center gap-3 mb-6" id="pin-dots">
+        <span class="w-4 h-4 rounded-full border-2 border-broccoli-400"></span>
+        <span class="w-4 h-4 rounded-full border-2 border-broccoli-400"></span>
+        <span class="w-4 h-4 rounded-full border-2 border-broccoli-400"></span>
+        <span class="w-4 h-4 rounded-full border-2 border-broccoli-400"></span>
+      </div>
+
+      <form id="pin-form" hx-post="/clock" hx-target="#clock-result" hx-swap="innerHTML" hx-indicator="#pin-loading">
+        <input type="hidden" name="pin" id="pin-input" value="">
+      </form>
+
+      <div class="grid grid-cols-3 gap-3">
+        {% for n in [1,2,3,4,5,6,7,8,9] %}
+        <button type="button" onclick="pressDigit('{{ n }}')"
+          class="pin-btn h-16 rounded-2xl bg-broccoli-50 hover:bg-broccoli-100 text-broccoli-800 text-2xl font-heading font-bold shadow-sm border border-broccoli-100">{{ n }}</button>
+        {% endfor %}
+        <button type="button" onclick="clearPin()"
+          class="pin-btn h-16 rounded-2xl bg-cauliflower-100 hover:bg-cauliflower-200 text-broccoli-700 text-sm font-heading font-bold shadow-sm border border-broccoli-100">Borrar</button>
+        <button type="button" onclick="pressDigit('0')"
+          class="pin-btn h-16 rounded-2xl bg-broccoli-50 hover:bg-broccoli-100 text-broccoli-800 text-2xl font-heading font-bold shadow-sm border border-broccoli-100">0</button>
+        <button type="button" onclick="backspacePin()"
+          class="pin-btn h-16 rounded-2xl bg-cauliflower-100 hover:bg-cauliflower-200 text-broccoli-700 text-sm font-heading font-bold shadow-sm border border-broccoli-100">&larr;</button>
+      </div>
+
+      <div id="pin-loading" class="htmx-indicator text-center text-broccoli-500 text-sm mt-4">Verificando...</div>
+      <div id="clock-result" class="mt-5"></div>
+    </div>
+
+    <p class="text-center mt-6"><a href="/admin" class="text-broccoli-400 hover:text-broccoli-600 text-xs underline">Panel administrativo</a></p>
+  </div>
+</div>
+
+<script>
+let pin = "";
+
+function renderDots() {
+  const dots = document.querySelectorAll("#pin-dots span");
+  dots.forEach((d, i) => {
+    if (i < pin.length) {
+      d.classList.add("bg-broccoli-500", "border-broccoli-500");
+    } else {
+      d.classList.remove("bg-broccoli-500", "border-broccoli-500");
+    }
+  });
+}
+
+function pressDigit(d) {
+  if (pin.length >= 4) return;
+  pin += d;
+  renderDots();
+  if (pin.length === 4) {
+    document.getElementById("pin-input").value = pin;
+    htmx.trigger("#pin-form", "submit");
+  }
+}
+
+function backspacePin() {
+  pin = pin.slice(0, -1);
+  renderDots();
+}
+
+function clearPin() {
+  pin = "";
+  renderDots();
+}
+
+document.body.addEventListener("htmx:afterRequest", function () {
+  pin = "";
+  renderDots();
+});
+
+document.addEventListener("keydown", function (e) {
+  if (e.key >= "0" && e.key <= "9") pressDigit(e.key);
+  if (e.key === "Backspace") backspacePin();
+});
+
+function tickClock() {
+  const now = new Date();
+  document.getElementById("live-clock").textContent = now.toLocaleString("es-CR", {
+    weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit",
+  });
+}
+tickClock();
+setInterval(tickClock, 15000);
+</script>
+{% endblock %}

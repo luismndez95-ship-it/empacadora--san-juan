@@ -1,0 +1,72 @@
+{% extends "admin_base.html" %}
+{% set active_page = "employees" %}
+{% block content %}
+<div class="flex flex-wrap items-end justify-between gap-3 mb-6">
+  <div>
+    <h1 class="font-heading font-extrabold text-2xl text-broccoli-800">Empleados</h1>
+    <p class="text-broccoli-500 text-sm">Administra quien puede marcar entrada/salida y con que PIN.</p>
+  </div>
+</div>
+
+{% if new_pin %}
+<div class="fade-in rounded-2xl bg-irazu-400/10 border border-irazu-400/40 p-4 mb-6 text-center">
+  <p class="text-irazu-600 font-heading font-bold">PIN asignado: <span class="text-2xl tracking-widest">{{ new_pin }}</span></p>
+  <p class="text-broccoli-600 text-sm mt-1">Anota este PIN y compartelo con la persona -- no se vuelve a mostrar aqui.</p>
+</div>
+{% endif %}
+
+<div class="grid lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-broccoli-100 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-broccoli-50 text-broccoli-500 text-xs uppercase">
+        <tr>
+          <th class="text-left px-5 py-3">Nombre</th>
+          <th class="text-left px-5 py-3">PIN</th>
+          <th class="text-left px-5 py-3">Estado</th>
+          <th class="text-right px-5 py-3">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for emp in employees %}
+        <tr class="border-t border-broccoli-50">
+          <td class="px-5 py-3">
+            <form method="post" action="/admin/employees/{{ emp.id }}" class="flex items-center gap-2">
+              <input name="full_name" value="{{ emp.full_name }}" class="rounded-lg border border-broccoli-200 px-2 py-1 w-40 focus:outline-none focus:ring-2 focus:ring-broccoli-400">
+              <input type="checkbox" name="active" {{ "checked" if emp.active }} class="accent-broccoli-600" title="Activo">
+              <button type="submit" class="text-broccoli-600 hover:text-broccoli-800 text-xs font-semibold underline">Guardar</button>
+            </form>
+          </td>
+          <td class="px-5 py-3 font-mono text-broccoli-700 tracking-widest">••••</td>
+          <td class="px-5 py-3">
+            {% if emp.active %}
+            <span class="inline-block bg-broccoli-100 text-broccoli-700 text-xs font-semibold px-2 py-1 rounded-full">Activo</span>
+            {% else %}
+            <span class="inline-block bg-red-50 text-red-500 text-xs font-semibold px-2 py-1 rounded-full">Inactivo</span>
+            {% endif %}
+          </td>
+          <td class="px-5 py-3 text-right">
+            <form method="post" action="/admin/employees/{{ emp.id }}/reset-pin" onsubmit="return confirm('Se generara un PIN nuevo para ' + '{{ emp.full_name }}' + '. ¿Continuar?');">
+              <button type="submit" class="text-irazu-600 hover:text-irazu-500 text-xs font-semibold underline">Reasignar PIN</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="px-5 py-6 text-center text-broccoli-400">Todavia no hay empleados registrados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border border-broccoli-100 p-5 h-fit">
+    <h2 class="font-heading font-bold text-broccoli-800 mb-4">Agregar empleado</h2>
+    <form method="post" action="/admin/employees" class="space-y-3">
+      <div>
+        <label class="block text-sm font-medium text-broccoli-700 mb-1">Nombre completo</label>
+        <input name="full_name" required class="w-full rounded-xl border border-broccoli-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-broccoli-400">
+      </div>
+      <button type="submit" class="w-full bg-broccoli-600 hover:bg-broccoli-700 text-white font-heading font-semibold rounded-xl py-2.5 shadow transition">Crear y generar PIN</button>
+      <p class="text-broccoli-400 text-xs">El PIN de 4 digitos se genera automaticamente al crear.</p>
+    </form>
+  </div>
+</div>
+{% endblock %}

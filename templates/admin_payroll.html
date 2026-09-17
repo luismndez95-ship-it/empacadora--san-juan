@@ -1,0 +1,68 @@
+{% extends "admin_base.html" %}
+{% set active_page = "payroll" %}
+{% block content %}
+<div class="flex flex-wrap items-end justify-between gap-3 mb-6">
+  <div>
+    <h1 class="font-heading font-extrabold text-2xl text-broccoli-800">Nomina semanal</h1>
+    <p class="text-broccoli-500 text-sm">Horas y pago calculado exacto al minuto, sin redondeos a favor de nadie.</p>
+  </div>
+  <div class="flex items-center gap-2">
+    <a href="/admin/payroll?week={{ prev_week_str }}" class="px-3 py-2 rounded-lg bg-white border border-broccoli-200 text-broccoli-600 text-sm hover:bg-broccoli-50">&larr; Anterior</a>
+    <span class="px-3 py-2 font-semibold text-broccoli-700 text-sm">{{ week_label }}</span>
+    <a href="/admin/payroll?week={{ next_week_str }}" class="px-3 py-2 rounded-lg bg-white border border-broccoli-200 text-broccoli-600 text-sm hover:bg-broccoli-50">Siguiente &rarr;</a>
+  </div>
+</div>
+
+<div class="flex flex-wrap gap-3 mb-6">
+  <a href="/admin/payroll/export.xlsx?week={{ monday.isoformat() }}" class="inline-flex items-center gap-2 bg-broccoli-600 hover:bg-broccoli-700 text-white text-sm font-heading font-semibold rounded-xl px-4 py-2.5 shadow transition">Exportar Excel</a>
+  <a href="/admin/payroll/export.pdf?week={{ monday.isoformat() }}" class="inline-flex items-center gap-2 bg-soil-500 hover:bg-soil-600 text-white text-sm font-heading font-semibold rounded-xl px-4 py-2.5 shadow transition">Exportar PDF</a>
+</div>
+
+<div class="bg-white rounded-2xl shadow-sm border border-broccoli-100 overflow-x-auto">
+  <table class="w-full text-sm min-w-[760px]">
+    <thead class="bg-broccoli-50 text-broccoli-500 text-xs uppercase">
+      <tr>
+        <th class="text-left px-4 py-3">Empleado</th>
+        <th class="text-right px-4 py-3">Horas regulares</th>
+        <th class="text-right px-4 py-3">Horas extra</th>
+        <th class="text-right px-4 py-3">Total horas</th>
+        <th class="text-right px-4 py-3">Pago regular</th>
+        <th class="text-right px-4 py-3">Pago extra</th>
+        <th class="text-right px-4 py-3">Pago total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in summary.rows %}
+      <tr class="border-t border-broccoli-50">
+        <td class="px-4 py-3 font-medium text-broccoli-700">{{ row.full_name }}{% if row.open_entry %} <span class="text-irazu-500 text-xs">(adentro ahora)</span>{% endif %}</td>
+        <td class="px-4 py-3 text-right">{{ "%.2f"|format(row.regular_hours) }}</td>
+        <td class="px-4 py-3 text-right">{{ "%.2f"|format(row.overtime_hours) }}</td>
+        <td class="px-4 py-3 text-right font-semibold">{{ "%.2f"|format(row.total_hours) }}</td>
+        <td class="px-4 py-3 text-right">{{ format_crc(row.regular_pay) }}</td>
+        <td class="px-4 py-3 text-right">{{ format_crc(row.overtime_pay) }}</td>
+        <td class="px-4 py-3 text-right font-bold text-broccoli-800">{{ format_crc(row.total_pay) }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="px-4 py-6 text-center text-broccoli-400">Sin marcajes en esta semana.</td></tr>
+      {% endfor %}
+    </tbody>
+    {% if summary.rows %}
+    <tfoot>
+      <tr class="border-t-2 border-broccoli-200 bg-broccoli-50">
+        <td class="px-4 py-3 font-heading font-bold text-broccoli-800">TOTAL</td>
+        <td class="px-4 py-3"></td>
+        <td class="px-4 py-3"></td>
+        <td class="px-4 py-3 text-right font-bold">{{ "%.2f"|format(summary.grand_total_hours) }}</td>
+        <td class="px-4 py-3"></td>
+        <td class="px-4 py-3"></td>
+        <td class="px-4 py-3 text-right font-heading font-extrabold text-broccoli-800">{{ format_crc(summary.grand_total_pay) }}</td>
+      </tr>
+    </tfoot>
+    {% endif %}
+  </table>
+</div>
+
+<p class="text-broccoli-400 text-xs mt-4">
+  ¿Alguien llego tarde o hay un marcaje mal hecho? Corrigelo en <a href="/admin/entries" class="underline hover:text-broccoli-600">Marcajes</a> antes de exportar -- la nomina siempre refleja los datos actuales.
+</p>
+{% endblock %}

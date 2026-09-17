@@ -1,0 +1,12 @@
+{% if ok %}
+<div class="fade-in rounded-2xl p-4 text-center {{ 'bg-broccoli-50 border border-broccoli-200' if action == 'entrada' else 'bg-irazu-400/10 border border-irazu-400/30' }}">
+  <p class="font-heading font-bold text-lg {{ 'text-broccoli-700' if action == 'entrada' else 'text-irazu-600' }}">
+    {{ "Entrada registrada" if action == "entrada" else "Salida registrada" }}
+  </p>
+  <p class="text-broccoli-700 text-sm mt-1">{{ message }}</p>
+</div>
+{% else %}
+<div class="fade-in rounded-2xl p-4 text-center bg-red-50 border border-red-200">
+  <p class="font-heading font-bold text-red-700 text-sm">{{ message }}</p>
+</div>
+{% endif %}

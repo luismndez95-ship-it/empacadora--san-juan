@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ business_name }} - Admin{% endblock %}
+{% block body %}
+<header class="bg-broccoli-700 text-cauliflower-50 shadow-md">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-broccoli-900/40 flex items-center justify-center font-heading font-extrabold text-sm">ESJ</div>
+      <div>
+        <p class="font-heading font-bold leading-tight">{{ business_name }}</p>
+        <p class="text-broccoli-200 text-xs">Panel administrativo</p>
+      </div>
+    </div>
+    <nav class="flex flex-wrap items-center gap-1 text-sm font-medium">
+      <a href="/admin/dashboard" class="px-3 py-2 rounded-lg hover:bg-broccoli-600 {{ 'bg-broccoli-600' if active_page == 'dashboard' }}">Inicio</a>
+      <a href="/admin/employees" class="px-3 py-2 rounded-lg hover:bg-broccoli-600 {{ 'bg-broccoli-600' if active_page == 'employees' }}">Empleados</a>
+      <a href="/admin/entries" class="px-3 py-2 rounded-lg hover:bg-broccoli-600 {{ 'bg-broccoli-600' if active_page == 'entries' }}">Marcajes</a>
+      <a href="/admin/payroll" class="px-3 py-2 rounded-lg hover:bg-broccoli-600 {{ 'bg-broccoli-600' if active_page == 'payroll' }}">Nomina</a>
+      <a href="/admin/settings" class="px-3 py-2 rounded-lg hover:bg-broccoli-600 {{ 'bg-broccoli-600' if active_page == 'settings' }}">Configuracion</a>
+      <a href="/admin/logout" class="px-3 py-2 rounded-lg hover:bg-red-700/60 text-cauliflower-100">Salir</a>
+    </nav>
+  </div>
+</header>
+
+<main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="text-center text-broccoli-400 text-xs py-6">
+  {{ business_name }} &middot; San Juan de Chicua, Cartago &middot; construido con Veltyk
+</footer>
+{% endblock %}
