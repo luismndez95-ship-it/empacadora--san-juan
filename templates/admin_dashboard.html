@@ -1,73 +1,147 @@
 {% extends "admin_base.html" %}
 {% set active_page = "dashboard" %}
+
+{% block header %}
+{% include "_top_header.html" %}
+
+{% set name_parts = business_name.split(' ', 1) %}
+<div class="w-full px-2 flex flex-col justify-center items-center text-center py-16 relative select-none">
+  <div class="absolute w-96 h-96 bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none z-0"></div>
+
+  <p class="relative z-10 text-sm font-black uppercase tracking-[0.5em] text-emerald-300/90 mb-4 drop-shadow-[0_2px_14px_rgba(16,185,129,0.8)]">Faldas del Volcan Irazu</p>
+
+  <h2 class="relative z-10 font-oswald text-6xl md:text-8xl font-bold tracking-tight uppercase leading-[0.9] text-transparent bg-clip-text bg-gradient-to-b from-white via-zinc-200 to-zinc-500 drop-shadow-[0_15px_25px_rgba(0,0,0,0.95)]">
+    {{ name_parts[0] }}{% if name_parts|length > 1 %}<br><span class="bg-gradient-to-r from-emerald-500 via-emerald-300 to-white bg-clip-text text-transparent">{{ name_parts[1] }}</span>{% endif %}
+  </h2>
+
+  <p class="relative z-10 text-xs md:text-sm text-zinc-200 mt-5 max-w-md font-medium tracking-wide leading-relaxed drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]">Resumen de hoy y de la semana en curso ({{ week_label }}).</p>
+</div>
+
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-10">
+  <div class="bg-zinc-900/20 backdrop-blur-md p-5 rounded-2xl border border-white/10 shadow-2xl flex items-center justify-between">
+    <div>
+      <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-300">Empleados Activos</p>
+      <p class="text-3xl font-black text-white mt-1">{{ employee_count }}</p>
+    </div>
+    <svg class="w-6 h-6 text-white opacity-60" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 8 1.34 8 4v2H4v-2c0-2.66 5.3-4 8-4zm0-2a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/></svg>
+  </div>
+  <div class="bg-zinc-900/20 backdrop-blur-md p-5 rounded-2xl border border-white/10 shadow-2xl flex items-center justify-between">
+    <div>
+      <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-300">Horas esta semana</p>
+      <p class="text-3xl font-black text-white mt-1">{{ "%.2f"|format(summary.grand_total_hours) }}</p>
+    </div>
+    <svg class="w-6 h-6 text-white opacity-60" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 10.41V6h-2v7l5.24 3.15 1.02-1.65-4.26-2.09z"/></svg>
+  </div>
+  <div class="bg-zinc-900/20 backdrop-blur-md p-5 rounded-2xl border border-white/10 shadow-2xl flex items-center justify-between">
+    <div>
+      <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-300">Pago Acumulado</p>
+      <p class="text-3xl font-black text-emerald-400 mt-1">{{ format_crc(summary.grand_total_pay) }}</p>
+    </div>
+    <span class="font-bold text-emerald-500 opacity-80">{{ currency_symbol }}</span>
+  </div>
+</div>
+{% endblock %}
+
 {% block content %}
-<div class="flex flex-wrap items-end justify-between gap-3 mb-6">
-  <div>
-    <h1 class="font-heading font-extrabold text-2xl text-broccoli-800">Buen dia</h1>
-    <p class="text-broccoli-500 text-sm">Resumen de hoy y de la semana en curso ({{ week_label }})</p>
+<section class="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
+  <div class="bg-black/40 backdrop-blur-lg border border-white/5 rounded-2xl p-6 shadow-2xl">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-sm font-bold uppercase tracking-wider text-zinc-300">Produccion de Hoy</h3>
+      <a href="/admin/production" class="text-xs font-bold text-emerald-400 hover:underline">Registrar &rarr;</a>
+    </div>
+    <div class="flex items-center justify-between bg-zinc-900/50 p-4 rounded-xl border border-white/5 flex-wrap gap-2">
+      <p class="text-xl font-bold text-white">{{ "%.0f"|format(production_summary.total_boxes) }} Cajas <span class="text-xs font-normal text-zinc-400">({{ "%.1f"|format(production_summary.total_kg) }} kg)</span></p>
+      <p class="text-sm font-black text-emerald-400">{{ "%.0f"|format(production_summary.overall_efficiency) + "% Eficiencia" if production_summary.overall_efficiency is not none else "sin meta" }}</p>
+    </div>
   </div>
-</div>
 
-<div class="grid sm:grid-cols-3 gap-4 mb-8">
-  <div class="bg-white rounded-2xl shadow-sm border border-broccoli-100 p-5">
-    <p class="text-broccoli-400 text-xs font-semibold uppercase tracking-wide">Empleados activos</p>
-    <p class="font-heading font-extrabold text-3xl text-broccoli-800 mt-1">{{ employee_count }}</p>
-  </div>
-  <div class="bg-white rounded-2xl shadow-sm border border-broccoli-100 p-5">
-    <p class="text-broccoli-400 text-xs font-semibold uppercase tracking-wide">Horas esta semana</p>
-    <p class="font-heading font-extrabold text-3xl text-broccoli-800 mt-1">{{ "%.1f"|format(summary.grand_total_hours) }}</p>
-  </div>
-  <div class="bg-white rounded-2xl shadow-sm border border-broccoli-100 p-5">
-    <p class="text-broccoli-400 text-xs font-semibold uppercase tracking-wide">Pago acumulado</p>
-    <p class="font-heading font-extrabold text-3xl text-broccoli-800 mt-1">{{ format_crc(summary.grand_total_pay) }}</p>
-  </div>
-</div>
-
-<div class="grid lg:grid-cols-2 gap-6">
-  <div class="bg-white rounded-2xl shadow-sm border border-broccoli-100 p-5">
-    <h2 class="font-heading font-bold text-broccoli-800 mb-4">Ahora mismo marcados adentro</h2>
+  <div class="bg-black/40 backdrop-blur-lg border border-white/5 rounded-2xl p-6 shadow-2xl flex flex-col justify-center {{ '' if open_entries else 'items-center text-center' }} min-h-[120px]">
+    <h3 class="text-sm font-bold uppercase tracking-wider text-zinc-300 mb-3 {{ 'self-start' if open_entries else '' }}">Marcados adentro</h3>
     {% if open_entries %}
-    <ul class="space-y-3">
+    <ul class="space-y-2 w-full">
       {% for e in open_entries %}
-      <li class="flex items-center justify-between bg-broccoli-50 rounded-xl px-4 py-3">
+      <li class="flex items-center justify-between bg-zinc-900/50 rounded-xl px-3 py-2 border border-white/5">
         <div>
-          <p class="font-semibold text-broccoli-800">{{ e.full_name }}</p>
-          <p class="text-broccoli-500 text-xs">Entro a las {{ e.clock_in_time }}</p>
+          <p class="text-sm font-semibold text-white">{{ e.full_name }}</p>
+          <p class="text-xs text-zinc-400">Entro a las {{ e.clock_in_time }}</p>
         </div>
-        <span class="text-broccoli-600 font-mono text-sm">{{ e.elapsed }}</span>
+        <span class="text-emerald-400 font-mono text-xs">{{ e.elapsed }}</span>
       </li>
       {% endfor %}
     </ul>
     {% else %}
-    <p class="text-broccoli-400 text-sm">Nadie marcado adentro en este momento.</p>
+    <svg class="w-8 h-8 text-zinc-600 mb-2" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 10.41V6h-2v7l5.24 3.15 1.02-1.65-4.26-2.09z"/></svg>
+    <p class="text-xs text-zinc-400">Nadie ha marcado entrada en la planta en este momento.</p>
     {% endif %}
+  </div>
+</section>
+
+<div class="mb-8">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h3 class="text-sm font-bold uppercase tracking-wider text-zinc-300">Inventario de Productos</h3>
+      <p class="text-xs text-zinc-400 mt-0.5">Estado de empaques listos hoy</p>
+    </div>
+    <a href="/admin/products" class="text-xs font-bold text-emerald-400 bg-emerald-500/5 border border-emerald-500/10 px-4 py-2 rounded-full hover:bg-emerald-500/10 transition">Editar productos &rarr;</a>
   </div>
 
-  <div class="bg-white rounded-2xl shadow-sm border border-broccoli-100 p-5">
-    <h2 class="font-heading font-bold text-broccoli-800 mb-4">Nomina de la semana (vista rapida)</h2>
-    {% if summary.rows %}
-    <table class="w-full text-sm">
-      <thead>
-        <tr class="text-left text-broccoli-400 text-xs uppercase">
-          <th class="pb-2">Empleado</th>
-          <th class="pb-2 text-right">Horas</th>
-          <th class="pb-2 text-right">Pago</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in summary.rows %}
-        <tr class="border-t border-broccoli-50">
-          <td class="py-2 font-medium text-broccoli-700">{{ row.full_name }}{% if row.open_entry %} <span class="text-irazu-500 text-xs">(adentro)</span>{% endif %}</td>
-          <td class="py-2 text-right">{{ "%.2f"|format(row.total_hours) }}</td>
-          <td class="py-2 text-right">{{ format_crc(row.total_pay) }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    <a href="/admin/payroll" class="inline-block mt-4 text-broccoli-600 hover:text-broccoli-800 text-sm font-semibold underline">Ver nomina completa y exportar &rarr;</a>
-    {% else %}
-    <p class="text-broccoli-400 text-sm">Todavia no hay marcajes esta semana.</p>
-    {% endif %}
+  {% if production_summary.rows %}
+  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    {% for row in production_summary.rows %}
+    {% set badge_colors = ["from-emerald-600 to-emerald-900", "from-lime-600 to-green-800", "from-amber-600 to-orange-800", "from-green-600 to-emerald-800", "from-violet-600 to-fuchsia-800"] %}
+    <div class="bg-black/40 backdrop-blur-lg border border-white/5 rounded-2xl overflow-hidden shadow-2xl flex flex-col group hover:border-white/10 transition">
+      <div class="relative overflow-hidden h-48 bg-gradient-to-br {{ badge_colors[loop.index0 % badge_colors|length] }} flex items-center justify-center shrink-0">
+        <span class="text-5xl font-black text-white/50">{{ row.product_name[0]|upper }}</span>
+        {% if row.photo_filename %}
+        <img class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-500" src="{{ url_for('assets', path=row.photo_filename) }}" alt="{{ row.product_name }}" onerror="this.remove()">
+        {% endif %}
+        <div class="absolute top-3 right-3 {{ 'text-emerald-400' if row.boxes > 0 else 'text-zinc-400' }} bg-zinc-950/80 backdrop-blur-md text-xs font-bold px-3 py-1 rounded-full border border-white/10">{{ "%.0f"|format(row.boxes) }} {{ row.unit_label }}</div>
+      </div>
+      <div class="p-5 flex-1 flex flex-col justify-between">
+        <div>
+          <h4 class="font-extrabold text-base mb-1 text-white">{{ row.product_name }}</h4>
+          {% if row.description %}
+          <p class="text-xs text-zinc-300 leading-relaxed mb-4">{{ row.description }}</p>
+          {% else %}
+          <p class="text-xs text-zinc-500 italic leading-relaxed mb-4">Sin descripcion (agregala en Productos)</p>
+          {% endif %}
+        </div>
+        <div>
+          <div class="flex justify-between text-[10px] text-zinc-400 mb-1.5 font-bold uppercase tracking-wider">
+            <span>Rendimiento</span>
+            <span class="{{ 'text-emerald-500' if row.efficiency_pct is not none else 'text-zinc-500' }}">{{ "%.1f"|format(row.efficiency_pct) + "%" if row.efficiency_pct is not none else "sin meta" }}</span>
+          </div>
+          <div class="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
+            <div class="{{ 'bg-emerald-500' if row.efficiency_pct is not none else 'bg-zinc-700' }} h-1.5 rounded-full" style="width: {{ [row.efficiency_pct, 100]|min if row.efficiency_pct is not none else 0 }}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    <a href="/admin/products" class="bg-black/20 backdrop-blur-lg border border-dashed border-white/20 rounded-2xl shadow-2xl flex flex-col items-center justify-center gap-2 min-h-[280px] text-zinc-400 hover:text-emerald-400 hover:border-emerald-500/40 transition group">
+      <svg class="w-8 h-8 opacity-60 group-hover:opacity-100 transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14"/></svg>
+      <span class="text-xs font-bold uppercase tracking-wider">Agregar producto</span>
+    </a>
   </div>
+  {% else %}
+  <p class="text-zinc-300 text-sm">Agrega productos en <a href="/admin/products" class="underline text-emerald-400">Productos</a> para verlos aqui.</p>
+  {% endif %}
+</div>
+
+<div class="bg-black/40 backdrop-blur-lg border border-white/5 rounded-2xl p-6 shadow-2xl">
+  <h3 class="text-sm font-bold uppercase tracking-wider text-zinc-300 mb-3">Nomina de la semana</h3>
+  {% if summary.rows %}
+  <ul class="space-y-2">
+    {% for row in summary.rows %}
+    <li class="flex items-center justify-between bg-zinc-900/50 rounded-xl px-3 py-2 border border-white/5">
+      <span class="text-sm font-medium text-white">{{ row.full_name }}{% if row.open_entry %} <span class="text-emerald-400 text-xs">(adentro)</span>{% endif %}</span>
+      <span class="text-xs text-zinc-300">{{ "%.2f"|format(row.total_hours) }}h &middot; {{ format_crc(row.total_pay) }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  <a href="/admin/payroll" class="inline-block mt-3 text-emerald-400 hover:underline text-xs font-bold">Ver nomina completa y exportar &rarr;</a>
+  {% else %}
+  <p class="text-xs text-zinc-400">Todavia no hay marcajes esta semana.</p>
+  {% endif %}
 </div>
 {% endblock %}

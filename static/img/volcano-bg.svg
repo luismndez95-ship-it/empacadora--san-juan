@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 700" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a0f10"/>
+      <stop offset="55%" stop-color="#0d1719"/>
+      <stop offset="100%" stop-color="#123130"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="35%" r="45%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.35"/>
+      <stop offset="60%" stop-color="#10b981" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1600" height="700" fill="url(#sky)"/>
+  <ellipse cx="820" cy="230" rx="480" ry="260" fill="url(#glow)"/>
+
+  <!-- Volcan Irazu: doble pico, bien contrastado contra el cielo -->
+  <path d="M0,700 L0,520 L260,300 L400,380 L620,150 L760,300 L900,190 L1060,340 L1260,240 L1440,400 L1600,340 L1600,700 Z" fill="#1f3d3a"/>
+  <path d="M560,190 L620,150 L680,200 L650,215 L600,205 Z" fill="#2a4d48"/>
+  <path d="M0,700 L0,560 L220,420 L420,500 L640,380 L820,470 L1020,380 L1220,480 L1420,410 L1600,470 L1600,700 Z" fill="#152826" opacity="0.9"/>
+
+  <!-- Franja de cultivo/canasta al pie: brocoli (verde) y coliflor (crema) -->
+  <g>
+    <circle cx="90" cy="660" r="34" fill="#255736"/>
+    <circle cx="140" cy="640" r="26" fill="#2f6e42"/>
+    <circle cx="45" cy="645" r="22" fill="#2f6e42"/>
+    <circle cx="180" cy="660" r="20" fill="#3f7d45"/>
+    <circle cx="1420" cy="660" r="34" fill="#e5dfc9"/>
+    <circle cx="1470" cy="642" r="26" fill="#efe9d6"/>
+    <circle cx="1375" cy="648" r="22" fill="#efe9d6"/>
+    <circle cx="1510" cy="662" r="18" fill="#f7f4ea"/>
+    <circle cx="740" cy="672" r="24" fill="#255736" opacity="0.7"/>
+    <circle cx="790" cy="660" r="18" fill="#2f6e42" opacity="0.7"/>
+    <circle cx="850" cy="670" r="20" fill="#e5dfc9" opacity="0.7"/>
+  </g>
+</svg>

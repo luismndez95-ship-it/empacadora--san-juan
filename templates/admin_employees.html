@@ -1,72 +1,127 @@
 {% extends "admin_base.html" %}
 {% set active_page = "employees" %}
 {% block content %}
-<div class="flex flex-wrap items-end justify-between gap-3 mb-6">
-  <div>
-    <h1 class="font-heading font-extrabold text-2xl text-broccoli-800">Empleados</h1>
-    <p class="text-broccoli-500 text-sm">Administra quien puede marcar entrada/salida y con que PIN.</p>
-  </div>
+<div class="mb-6 select-none">
+  <h2 class="text-3xl font-black uppercase tracking-tight font-oswald text-white">Gestion de Empleados</h2>
+  <p class="text-xs text-zinc-400 mt-0.5">Administra el personal de la planta, sus tarifas por hora y la asignacion de codigos PIN de seguridad.</p>
 </div>
 
 {% if new_pin %}
-<div class="fade-in rounded-2xl bg-irazu-400/10 border border-irazu-400/40 p-4 mb-6 text-center">
-  <p class="text-irazu-600 font-heading font-bold">PIN asignado: <span class="text-2xl tracking-widest">{{ new_pin }}</span></p>
-  <p class="text-broccoli-600 text-sm mt-1">Anota este PIN y compartelo con la persona -- no se vuelve a mostrar aqui.</p>
+<div class="fade-in rounded-2xl bg-emerald-500/10 border border-emerald-500/40 p-4 mb-6 text-center">
+  <p class="text-emerald-400 font-heading font-bold">PIN asignado: <span class="text-2xl tracking-widest">{{ new_pin }}</span></p>
+  <p class="text-zinc-300 text-sm mt-1">Anota este PIN y compartelo con la persona -- no se vuelve a mostrar aqui.</p>
+</div>
+{% endif %}
+{% if error %}
+<div class="fade-in rounded-2xl bg-red-950/40 border border-red-500/30 p-4 mb-6 text-center">
+  <p class="text-red-400 font-heading font-bold text-sm">{{ error }}</p>
 </div>
 {% endif %}
 
-<div class="grid lg:grid-cols-3 gap-6">
-  <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-broccoli-100 overflow-hidden">
-    <table class="w-full text-sm">
-      <thead class="bg-broccoli-50 text-broccoli-500 text-xs uppercase">
-        <tr>
-          <th class="text-left px-5 py-3">Nombre</th>
-          <th class="text-left px-5 py-3">PIN</th>
-          <th class="text-left px-5 py-3">Estado</th>
-          <th class="text-right px-5 py-3">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for emp in employees %}
-        <tr class="border-t border-broccoli-50">
-          <td class="px-5 py-3">
-            <form method="post" action="/admin/employees/{{ emp.id }}" class="flex items-center gap-2">
-              <input name="full_name" value="{{ emp.full_name }}" class="rounded-lg border border-broccoli-200 px-2 py-1 w-40 focus:outline-none focus:ring-2 focus:ring-broccoli-400">
-              <input type="checkbox" name="active" {{ "checked" if emp.active }} class="accent-broccoli-600" title="Activo">
-              <button type="submit" class="text-broccoli-600 hover:text-broccoli-800 text-xs font-semibold underline">Guardar</button>
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-12 w-full">
+  <!-- Fichero de personal: fichas individuales, sin tabla rigida -->
+  <div class="lg:col-span-7 bg-black/40 backdrop-blur-xl border border-white/5 rounded-2xl p-6 shadow-2xl space-y-3">
+    {% if employees %}
+    <div class="flex justify-between items-center border-b border-white/10 pb-3 text-[10px] font-black uppercase tracking-wider text-zinc-400">
+      <span>Colaborador</span>
+      <div class="flex space-x-16">
+        <span>Pago/Hora</span>
+        <span>Acciones</span>
+      </div>
+    </div>
+    {% for emp in employees %}
+    {% set parts = emp.full_name.split() %}
+    {% set initials = ((parts[0][0] + parts[-1][0]) if parts|length > 1 else emp.full_name[:2])|upper %}
+    <div class="p-4 bg-zinc-900/30 rounded-xl border border-white/5 hover:border-emerald-500/20 transition">
+      <!-- Modo vista: ficha con avatar de iniciales -->
+      <div id="view-{{ emp.id }}" class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold text-sm shrink-0">{{ initials }}</div>
+          <div>
+            <h4 class="font-extrabold text-sm text-white uppercase tracking-wide">{{ emp.full_name }}</h4>
+            <p class="text-[11px] {{ 'text-emerald-400' if emp.active else 'text-red-400' }} font-medium">
+              Estado: <span class="font-bold">{{ "Activo" if emp.active else "Inactivo" }}</span> &bull; PIN:
+              <span id="pin-mask-{{ emp.id }}" class="font-mono tracking-widest">****</span><span id="pin-real-{{ emp.id }}" class="hidden font-mono tracking-widest">{{ emp.pin_code }}</span>
+              <button type="button" onclick="togglePin({{ emp.id }})" class="text-zinc-500 hover:text-white underline font-sans normal-case ml-0.5">(ver)</button>
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
+          <div class="text-right">
+            <p class="text-sm font-black text-white font-oswald">{{ format_crc(emp.hourly_rate) if emp.hourly_rate is not none else format_crc(default_hourly_rate) }}</p>
+            <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">{{ "Tarifa personalizada" if emp.hourly_rate is not none else "Tarifa base (global)" }}</p>
+          </div>
+          <div class="flex space-x-3 text-xs font-bold shrink-0">
+            <form method="post" action="/admin/employees/{{ emp.id }}/reset-pin" onsubmit="return confirm('Se generara un PIN nuevo para {{ emp.full_name }}. ¿Continuar?');">
+              <button type="submit" class="text-emerald-400 hover:underline">Reasignar PIN</button>
             </form>
-          </td>
-          <td class="px-5 py-3 font-mono text-broccoli-700 tracking-widest">••••</td>
-          <td class="px-5 py-3">
-            {% if emp.active %}
-            <span class="inline-block bg-broccoli-100 text-broccoli-700 text-xs font-semibold px-2 py-1 rounded-full">Activo</span>
-            {% else %}
-            <span class="inline-block bg-red-50 text-red-500 text-xs font-semibold px-2 py-1 rounded-full">Inactivo</span>
-            {% endif %}
-          </td>
-          <td class="px-5 py-3 text-right">
-            <form method="post" action="/admin/employees/{{ emp.id }}/reset-pin" onsubmit="return confirm('Se generara un PIN nuevo para ' + '{{ emp.full_name }}' + '. ¿Continuar?');">
-              <button type="submit" class="text-irazu-600 hover:text-irazu-500 text-xs font-semibold underline">Reasignar PIN</button>
-            </form>
-          </td>
-        </tr>
-        {% else %}
-        <tr><td colspan="4" class="px-5 py-6 text-center text-broccoli-400">Todavia no hay empleados registrados.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+            <button type="button" onclick="toggleEdit({{ emp.id }})" class="text-zinc-500 hover:text-white transition">Editar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modo edicion: oculto hasta pulsar "Editar" -->
+      <div id="edit-{{ emp.id }}" class="hidden space-y-3 mt-4 pt-4 border-t border-white/5">
+        <form id="edit-form-{{ emp.id }}" method="post" action="/admin/employees/{{ emp.id }}" class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <input name="full_name" value="{{ emp.full_name }}" required class="col-span-2 bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 transition" placeholder="Nombre completo">
+            <input name="hourly_rate" type="number" step="1" min="0" value="{{ emp.hourly_rate if emp.hourly_rate is not none else '' }}" placeholder="{{ '%.0f'|format(default_hourly_rate) }} (global)" class="bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition">
+            <label class="flex items-center gap-1.5 text-xs text-zinc-400"><input type="checkbox" name="active" {{ "checked" if emp.active }} class="accent-emerald-500"> Activo</label>
+          </div>
+        </form>
+        <div class="flex items-center justify-between gap-4">
+          <form method="post" action="/admin/employees/{{ emp.id }}/delete" onsubmit="return confirm('¿Eliminar por completo a {{ emp.full_name }}? Esto solo funciona si nunca ha marcado entrada. Si ya trabajo, mejor desmarca Activo arriba.');">
+            <button type="submit" class="text-xs font-bold text-red-400 hover:underline">Eliminar</button>
+          </form>
+          <div class="flex items-center gap-4">
+            <button type="button" onclick="toggleEdit({{ emp.id }})" class="text-xs font-bold text-zinc-400 hover:text-white">Cancelar</button>
+            <button type="submit" form="edit-form-{{ emp.id }}" class="text-xs font-bold text-emerald-400 hover:underline">Guardar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p class="text-zinc-400 text-sm text-center py-8">Todavia no hay empleados registrados.</p>
+    {% endif %}
   </div>
 
-  <div class="bg-white rounded-2xl shadow-sm border border-broccoli-100 p-5 h-fit">
-    <h2 class="font-heading font-bold text-broccoli-800 mb-4">Agregar empleado</h2>
-    <form method="post" action="/admin/employees" class="space-y-3">
+  <!-- Formulario registrar colaborador -->
+  <div class="lg:col-span-5 bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl h-fit">
+    <h3 class="text-sm font-black uppercase tracking-wider text-zinc-300 mb-4 font-oswald">Registrar colaborador</h3>
+    <form method="post" action="/admin/employees" class="space-y-4">
       <div>
-        <label class="block text-sm font-medium text-broccoli-700 mb-1">Nombre completo</label>
-        <input name="full_name" required class="w-full rounded-xl border border-broccoli-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-broccoli-400">
+        <label class="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Nombre Completo</label>
+        <input name="full_name" type="text" placeholder="Ej. Luis Piedra" required class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition">
       </div>
-      <button type="submit" class="w-full bg-broccoli-600 hover:bg-broccoli-700 text-white font-heading font-semibold rounded-xl py-2.5 shadow transition">Crear y generar PIN</button>
-      <p class="text-broccoli-400 text-xs">El PIN de 4 digitos se genera automaticamente al crear.</p>
+      <div>
+        <label class="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Tarifa por Hora (Colones)</label>
+        <div class="relative flex items-center">
+          <input name="hourly_rate" type="number" step="1" min="0" placeholder="Dejar vacio para usar la tarifa global ({{ format_crc(default_hourly_rate) }})" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition">
+          <span class="absolute right-4 text-xs font-bold text-zinc-500">&#8353; / hr</span>
+        </div>
+      </div>
+      <p class="text-[10px] text-zinc-400 leading-relaxed bg-black/20 p-2.5 rounded-lg border border-white/5">
+        <strong class="text-zinc-300">Nota del sistema:</strong> El codigo PIN de 4 digitos para el reloj marcador se generara y mostrara automaticamente de forma segura al crear el expediente del empleado.
+      </p>
+      <div>
+        <label class="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Asignar PIN de Marcaje (4 Digitos)</label>
+        <input name="pin_code" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="Dejar vacio para generar uno automatico" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 tracking-widest focus:outline-none focus:border-emerald-500 transition">
+        <p class="text-[9px] text-zinc-500 mt-1">Elige un codigo facil de recordar para el empleado. Si lo dejas vacio, se genera uno al azar.</p>
+      </div>
+      <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition text-xs tracking-wide mt-2">Crear y generar PIN</button>
     </form>
   </div>
 </div>
+
+<script>
+function toggleEdit(id) {
+  document.getElementById("view-" + id).classList.toggle("hidden");
+  document.getElementById("edit-" + id).classList.toggle("hidden");
+}
+function togglePin(id) {
+  document.getElementById("pin-mask-" + id).classList.toggle("hidden");
+  document.getElementById("pin-real-" + id).classList.toggle("hidden");
+}
+</script>
 {% endblock %}

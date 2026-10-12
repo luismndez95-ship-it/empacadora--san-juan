@@ -29,8 +29,8 @@ def compute_pay(hours: float, hourly_rate: float, overtime_rate: float, is_overt
     """Pago exacto: horas reales (sin redondear a favor de nadie) por la
     tarifa que aplique. Si el admin marco la entrada como hora extra,
     usa la tarifa de hora extra configurada en Settings; si no, la
-    tarifa regular. Sin umbral automatico -- el admin decide caso por
-    caso (ver ADMIN_ENTRIES en main.py)."""
+    tarifa regular (propia del empleado, o la global si no tiene una
+    asignada). Sin umbral automatico -- el admin decide caso por caso."""
     rate = overtime_rate if is_overtime else hourly_rate
     return round(hours * rate, 2)
 
@@ -66,6 +66,7 @@ def week_range_iso(monday: date) -> tuple[str, str]:
 
 
 DIAS_ES = ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", "Domingo"]
+DIA_CORTO_ES = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"]
 MESES_ES = [
     "enero", "febrero", "marzo", "abril", "mayo", "junio",
     "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
@@ -80,23 +81,36 @@ def format_fecha_larga(d: date) -> str:
     return f"{DIAS_ES[d.weekday()]} {d.day} de {MESES_ES[d.month - 1]}"
 
 
-def build_payroll_summary(entries: list[dict], settings: dict) -> dict:
+def build_payroll_summary(entries: list[dict], settings: dict, monday: date | None = None) -> dict:
     """Agrupa entradas de la semana por empleado y calcula totales.
-    `entries` viene de db.get_entries_between (incluye full_name)."""
+
+    `entries` viene de db.get_entries_between (incluye full_name y
+    employee_hourly_rate). Si el empleado no tiene tarifa propia
+    (employee_hourly_rate es None), se usa la tarifa global de Settings
+    -- asi la app sigue funcionando igual para quien no la configure.
+
+    Si se pasa `monday`, cada fila incluye ademas `days`: el desglose
+    de horas/pago dia por dia (Lunes a Domingo) para la tarjeta de
+    nomina estilo "historial semanal" en admin_payroll.html.
+    """
     by_employee: dict[str, dict] = {}
     for e in entries:
         name = e["full_name"]
+        employee_rate = e.get("employee_hourly_rate")
+        effective_rate = employee_rate if employee_rate is not None else settings["hourly_rate"]
         row = by_employee.setdefault(name, {
             "full_name": name,
+            "hourly_rate": effective_rate,
             "regular_hours": 0.0,
             "overtime_hours": 0.0,
             "regular_pay": 0.0,
             "overtime_pay": 0.0,
             "open_entry": False,
             "entry_count": 0,
+            "_by_date": {},
         })
         hours = worked_hours(e["clock_in"], e["clock_out"])
-        pay = compute_pay(hours, settings["hourly_rate"], settings["overtime_hourly_rate"], bool(e["is_overtime"]))
+        pay = compute_pay(hours, effective_rate, settings["overtime_hourly_rate"], bool(e["is_overtime"]))
         row["entry_count"] += 1
         if e["clock_out"] is None:
             row["open_entry"] = True
@@ -106,11 +120,31 @@ def build_payroll_summary(entries: list[dict], settings: dict) -> dict:
         else:
             row["regular_hours"] += hours
             row["regular_pay"] += pay
+        entry_date = parse_iso(e["clock_in"]).date()
+        bucket = row["_by_date"].setdefault(entry_date, {"hours": 0.0, "pay": 0.0})
+        bucket["hours"] += hours
+        bucket["pay"] += pay
 
     rows = sorted(by_employee.values(), key=lambda r: r["full_name"])
+    today = date.today()
     for row in rows:
         row["total_hours"] = row["regular_hours"] + row["overtime_hours"]
         row["total_pay"] = row["regular_pay"] + row["overtime_pay"]
+        if monday is not None:
+            days = []
+            for i in range(7):
+                d = monday + timedelta(days=i)
+                bucket = row["_by_date"].get(d, {"hours": 0.0, "pay": 0.0})
+                days.append({
+                    "date": d,
+                    "label": f"{DIA_CORTO_ES[i]} {d.day}",
+                    "hours": bucket["hours"],
+                    "pay": bucket["pay"],
+                    "is_today": d == today,
+                    "has_hours": bucket["hours"] > 0,
+                })
+            row["days"] = days
+        del row["_by_date"]
 
     grand_total_hours = sum(r["total_hours"] for r in rows)
     grand_total_pay = sum(r["total_pay"] for r in rows)

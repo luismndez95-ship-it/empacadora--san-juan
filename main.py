@@ -33,6 +33,7 @@ log = logging.getLogger("empacadora")
 app = FastAPI(title="Empacadora San Juan")
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/assets", StaticFiles(directory="assets/photos"), name="assets")
 
 SESSION_SECRET = os.environ.get("SESSION_SECRET")
 if not SESSION_SECRET:

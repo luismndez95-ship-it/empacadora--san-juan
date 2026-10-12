@@ -1,0 +1,104 @@
+{% extends "admin_base.html" %}
+{% set active_page = "products" %}
+{% block content %}
+<div class="mb-6 select-none">
+  <h2 class="text-3xl font-black uppercase tracking-tight font-oswald text-white">Catalogo de Productos</h2>
+  <p class="text-xs text-zinc-400 mt-0.5">Administra los tipos de hortalizas empacadas en la planta y sus metas diarias de eficiencia.</p>
+</div>
+
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-12 w-full">
+  <!-- Lista editorial: texto limpio, sin inputs visibles por defecto -->
+  <div class="lg:col-span-7 bg-black/40 backdrop-blur-xl border border-white/5 rounded-2xl p-6 shadow-2xl space-y-4">
+    {% if products %}
+    <div class="flex justify-between items-center border-b border-white/10 pb-3 text-[10px] font-black uppercase tracking-wider text-zinc-400">
+      <span>Detalle del Producto</span>
+      <div class="flex space-x-12">
+        <span>Meta Diaria</span>
+        <span>Acciones</span>
+      </div>
+    </div>
+    {% for p in products %}
+    <div class="p-4 bg-zinc-900/30 rounded-xl border border-white/5">
+      <!-- Modo vista: texto editorial limpio, sin cajas de input -->
+      <div id="view-{{ p.id }}" class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="max-w-md">
+          <h4 class="font-extrabold text-sm text-white uppercase tracking-wide">{{ p.name }}{% if not p.active %} <span class="text-[10px] text-zinc-500 normal-case">(inactivo)</span>{% endif %}</h4>
+          {% if p.description %}
+          <p class="text-xs text-zinc-400 mt-1 leading-relaxed">{{ p.description }}</p>
+          {% else %}
+          <p class="text-xs text-zinc-600 italic mt-1 leading-relaxed">Sin descripcion todavia.</p>
+          {% endif %}
+        </div>
+        <div class="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto shrink-0">
+          <div class="text-right">
+            {% if p.daily_target_boxes is not none %}
+            <p class="text-sm font-black text-emerald-400">{{ "%.0f"|format(p.daily_target_boxes) }} <span class="text-[10px] font-bold text-zinc-500 uppercase">{{ p.unit_label or "Cajas" }}</span></p>
+            {% else %}
+            <p class="text-xs font-bold text-zinc-600 uppercase">Sin meta</p>
+            {% endif %}
+          </div>
+          <button type="button" onclick="toggleEdit({{ p.id }})" class="text-xs font-bold text-emerald-400 hover:underline">Editar</button>
+        </div>
+      </div>
+
+      <!-- Modo edicion: oculto hasta que se pulse "Editar" -->
+      <form id="edit-{{ p.id }}" method="post" action="/admin/products/{{ p.id }}" class="hidden space-y-3 mt-1">
+        <div class="grid grid-cols-2 gap-3">
+          <input name="name" value="{{ p.name }}" required class="col-span-2 bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 transition" placeholder="Nombre">
+          <input name="daily_target_boxes" type="number" step="0.1" min="0" value="{{ p.daily_target_boxes if p.daily_target_boxes is not none else '' }}" placeholder="Meta diaria" class="bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition">
+          <input name="unit_label" value="{{ p.unit_label or '' }}" placeholder="Cajas" class="bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition">
+        </div>
+        <textarea name="description" rows="2" placeholder="Descripcion para la tarjeta del Inicio (opcional)" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition resize-none">{{ p.description or "" }}</textarea>
+        <div class="flex items-center justify-between">
+          <label class="flex items-center gap-1.5 text-xs text-zinc-400"><input type="checkbox" name="active" {{ "checked" if p.active }} class="accent-emerald-500"> Activo</label>
+          <div class="flex items-center gap-4">
+            <button type="button" onclick="toggleEdit({{ p.id }})" class="text-xs font-bold text-zinc-400 hover:text-white">Cancelar</button>
+            <button type="submit" class="text-xs font-bold text-emerald-400 hover:underline">Guardar</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p class="text-zinc-400 text-sm text-center py-8">Todavia no hay productos. Agrega el primero &rarr;</p>
+    {% endif %}
+  </div>
+
+  <!-- Formulario agregar producto -->
+  <div class="lg:col-span-5 bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl h-fit">
+    <h3 class="text-sm font-black uppercase tracking-wider text-zinc-300 mb-4 font-oswald">Agregar nuevo producto</h3>
+    <form method="post" action="/admin/products" class="space-y-4">
+      <div>
+        <label class="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Nombre del Producto</label>
+        <input name="name" type="text" placeholder="Ej. Brocoli" required class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition">
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Meta Diaria (opcional)</label>
+          <input name="daily_target_boxes" type="number" step="0.1" min="0" placeholder="Ej. 40" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Unidad de Medida</label>
+          <select name="unit_label" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-emerald-500 transition">
+            <option value="Cajas">Cajas</option>
+            <option value="Mallas">Mallas</option>
+            <option value="Sacos">Sacos</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Descripcion (opcional)</label>
+        <textarea name="description" rows="3" placeholder="Describe brevemente la presentacion del vegetal..." class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition resize-none"></textarea>
+      </div>
+      <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition text-xs tracking-wide mt-2">Agregar al catalogo</button>
+    </form>
+  </div>
+</div>
+
+<script>
+function toggleEdit(id) {
+  document.getElementById("view-" + id).classList.toggle("hidden");
+  document.getElementById("edit-" + id).classList.toggle("hidden");
+}
+</script>
+{% endblock %}

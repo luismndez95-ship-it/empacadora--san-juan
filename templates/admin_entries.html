@@ -1,57 +1,69 @@
 {% extends "admin_base.html" %}
 {% set active_page = "entries" %}
 {% block content %}
-<div class="flex flex-wrap items-end justify-between gap-3 mb-6">
+<div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 select-none">
   <div>
-    <h1 class="font-heading font-extrabold text-2xl text-broccoli-800">Marcajes</h1>
-    <p class="text-broccoli-500 text-sm">Corrige entradas/salidas si alguien se equivoco marcando, o marca horas como extra.</p>
+    <h2 class="text-3xl font-black uppercase tracking-tight font-oswald text-white">Historial de Asistencia</h2>
+    <p class="text-xs text-zinc-400 mt-0.5">Corrige entradas/salidas si alguien se equivoco marcando en el quiosco, o marca horas como extra.</p>
   </div>
-  <div class="flex items-center gap-2">
-    <a href="/admin/entries?week={{ prev_week_str }}" class="px-3 py-2 rounded-lg bg-white border border-broccoli-200 text-broccoli-600 text-sm hover:bg-broccoli-50">&larr; Semana anterior</a>
-    <span class="px-3 py-2 font-semibold text-broccoli-700 text-sm">{{ week_label }}</span>
-    <a href="/admin/entries?week={{ next_week_str }}" class="px-3 py-2 rounded-lg bg-white border border-broccoli-200 text-broccoli-600 text-sm hover:bg-broccoli-50">Semana siguiente &rarr;</a>
+  <div class="bg-zinc-900/40 border border-white/5 px-4 py-2 rounded-xl backdrop-blur-md text-right">
+    <p class="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Ciclo de Pago</p>
+    <p class="text-xs font-black {{ 'text-emerald-400' if is_current_week else 'text-zinc-300' }}">{{ "Semana en curso" if is_current_week else "Semana pasada" }}</p>
   </div>
 </div>
 
+<div class="flex items-center justify-center gap-2 mb-6">
+  <a href="/admin/entries?week={{ prev_week_str }}" class="px-4 py-2 rounded-full bg-zinc-900/40 border border-white/5 backdrop-blur-md text-xs font-semibold text-zinc-300 hover:text-white hover:border-emerald-500/30 transition">&larr; Semana anterior</a>
+  <span class="px-4 py-2 font-bold text-white text-xs uppercase tracking-wider">{{ week_label }}</span>
+  <a href="/admin/entries?week={{ next_week_str }}" class="px-4 py-2 rounded-full bg-zinc-900/40 border border-white/5 backdrop-blur-md text-xs font-semibold text-zinc-300 hover:text-white hover:border-emerald-500/30 transition">Semana siguiente &rarr;</a>
+</div>
+
 {% for e in entries %}
-<form id="edit-{{ e.id }}" method="post" action="/admin/entries/{{ e.id }}"></form>
+<form id="edit-{{ e.id }}" method="post" action="/admin/entries/{{ e.id }}"><input type="hidden" name="week" value="{{ monday.isoformat() }}"></form>
 <form id="delete-{{ e.id }}" method="post" action="/admin/entries/{{ e.id }}/delete" onsubmit="return confirm('¿Eliminar este marcaje de {{ e.full_name }}? Esta accion no se puede deshacer.');">
   <input type="hidden" name="week" value="{{ monday.isoformat() }}">
 </form>
 {% endfor %}
 
-<div class="bg-white rounded-2xl shadow-sm border border-broccoli-100 overflow-x-auto">
-  <table class="w-full text-sm min-w-[860px]">
-    <thead class="bg-broccoli-50 text-broccoli-500 text-xs uppercase">
-      <tr>
-        <th class="text-left px-4 py-3">Empleado</th>
-        <th class="text-left px-4 py-3">Entrada</th>
-        <th class="text-left px-4 py-3">Salida</th>
-        <th class="text-left px-4 py-3">Duracion</th>
-        <th class="text-center px-4 py-3">Hora extra</th>
-        <th class="text-right px-4 py-3">Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for e in entries %}
-      <tr class="border-t border-broccoli-50">
-        <td class="px-4 py-3 font-medium text-broccoli-700">{{ e.full_name }}</td>
-        <td class="px-4 py-3">
-          <input form="edit-{{ e.id }}" type="hidden" name="week" value="{{ monday.isoformat() }}">
-          <input form="edit-{{ e.id }}" type="datetime-local" name="clock_in" value="{{ e.clock_in_local }}" class="rounded-lg border border-broccoli-200 px-2 py-1 text-xs">
-        </td>
-        <td class="px-4 py-3"><input form="edit-{{ e.id }}" type="datetime-local" name="clock_out" value="{{ e.clock_out_local }}" class="rounded-lg border border-broccoli-200 px-2 py-1 text-xs"></td>
-        <td class="px-4 py-3 text-broccoli-500">{{ e.duration }}</td>
-        <td class="px-4 py-3 text-center"><input form="edit-{{ e.id }}" type="checkbox" name="is_overtime" {{ "checked" if e.is_overtime }} class="accent-irazu-500"></td>
-        <td class="px-4 py-3 text-right whitespace-nowrap">
-          <button form="edit-{{ e.id }}" type="submit" class="text-broccoli-600 hover:text-broccoli-800 text-xs font-semibold underline mr-3">Guardar</button>
-          <button form="delete-{{ e.id }}" type="submit" class="text-red-500 hover:text-red-700 text-xs font-semibold underline">Eliminar</button>
-        </td>
-      </tr>
-      {% else %}
-      <tr><td colspan="6" class="px-4 py-6 text-center text-broccoli-400">Sin marcajes en esta semana.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+{% if entries %}
+<div class="bg-black/40 backdrop-blur-xl border border-white/5 rounded-2xl p-6 shadow-2xl space-y-3">
+  <div class="hidden md:flex justify-between items-center border-b border-white/10 pb-3 text-[10px] font-black uppercase tracking-wider text-zinc-400">
+    <span class="w-40">Colaborador</span>
+    <span class="flex-1 text-center">Entrada / Salida</span>
+    <span class="w-24 text-center">Extra</span>
+    <span class="w-32 text-right">Acciones</span>
+  </div>
+  {% for e in entries %}
+  <div class="p-4 bg-zinc-900/30 rounded-xl border border-white/5 hover:border-emerald-500/20 transition flex flex-col md:flex-row md:items-center gap-4">
+    <div class="md:w-40 shrink-0">
+      <h4 class="font-extrabold text-sm text-white uppercase tracking-wide">{{ e.full_name }}</h4>
+      <p class="text-[11px] text-zinc-500 font-medium">{{ e.duration }}</p>
+    </div>
+    <div class="flex-1 flex flex-col sm:flex-row items-center gap-2 justify-center">
+      <input form="edit-{{ e.id }}" type="datetime-local" name="clock_in" value="{{ e.clock_in_local }}" class="w-full sm:w-auto bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 transition">
+      <span class="text-zinc-600 text-xs hidden sm:inline">&rarr;</span>
+      <input form="edit-{{ e.id }}" type="datetime-local" name="clock_out" value="{{ e.clock_out_local }}" class="w-full sm:w-auto bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 transition">
+    </div>
+    <div class="md:w-24 flex items-center justify-center gap-1.5 text-[10px] text-zinc-400 uppercase font-bold">
+      <input form="edit-{{ e.id }}" type="checkbox" name="is_overtime" {{ "checked" if e.is_overtime }} class="accent-emerald-500"> Extra
+    </div>
+    <div class="md:w-32 flex items-center justify-center md:justify-end gap-4 text-xs font-bold">
+      <button form="edit-{{ e.id }}" type="submit" class="text-emerald-400 hover:underline">Guardar</button>
+      <button form="delete-{{ e.id }}" type="submit" class="text-red-400 hover:underline">Eliminar</button>
+    </div>
+  </div>
+  {% endfor %}
 </div>
+{% else %}
+<!-- CONTENEDOR TRASLUCIDO CON EMPTY STATE DISEÑADO -->
+<div class="bg-black/40 backdrop-blur-xl border border-white/5 rounded-2xl p-8 shadow-2xl min-h-[350px] flex flex-col items-center justify-center text-center">
+  <div class="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 mb-4 shadow-inner">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  </div>
+  <h3 class="text-sm font-bold uppercase tracking-wide text-zinc-300 mb-1">Sin marcajes esta semana</h3>
+  <p class="text-xs text-zinc-500 max-w-sm leading-relaxed">Los registros de ingresos y salidas apareceran de forma automatica en esta lista una vez que los operarios utilicen el quiosco digital en la entrada.</p>
+</div>
+{% endif %}
 {% endblock %}

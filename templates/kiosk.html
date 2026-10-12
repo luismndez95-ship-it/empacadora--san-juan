@@ -1,53 +1,50 @@
 {% extends "base.html" %}
 {% block title %}{{ business_name }} - Marcaje{% endblock %}
 {% block body %}
-<div class="relative flex-1 flex flex-col items-center justify-center volcano-hero overflow-hidden px-4 py-8">
+<div class="relative flex-1 flex flex-col items-center justify-center overflow-hidden px-4 py-8">
 
-  <svg class="volcano-silhouette" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
-    <path d="M0,400 L0,280 L180,150 L260,210 L420,60 L520,150 L640,90 L760,190 L900,120 L1040,220 L1200,170 L1200,400 Z" fill="#dfeada"/>
-    <path d="M0,400 L0,330 L150,260 L300,320 L460,240 L600,300 L780,230 L950,300 L1100,250 L1200,290 L1200,400 Z" fill="#c7e0c0" opacity="0.8"/>
-  </svg>
-
-  <div class="relative z-10 w-full max-w-md">
+  <div class="relative z-10 w-full max-w-md flex flex-col items-center">
     <div class="text-center mb-6">
-      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-broccoli-600 text-cauliflower-50 text-3xl font-heading font-extrabold shadow-lg mb-3">ESJ</div>
-      <h1 class="font-heading font-extrabold text-3xl text-broccoli-800">{{ business_name }}</h1>
-      <p class="text-broccoli-600 font-medium text-sm mt-1">San Juan de Chicua &middot; Cartago &middot; a los pies del Irazu</p>
-      <p id="live-clock" class="text-broccoli-500 text-sm mt-2 font-mono"></p>
+      <img src="{{ url_for('assets', path='logo_esj.png') }}" alt="{{ business_name }}" class="w-24 h-24 object-contain mx-auto mb-3 drop-shadow-[0_8px_20px_rgba(16,185,129,0.35)]">
+      <h1 class="font-heading font-extrabold text-3xl text-white">{{ business_name }}</h1>
+      <p class="text-emerald-400 font-medium text-sm mt-1">San Juan de Chicua &middot; Cartago &middot; a los pies del Irazu</p>
+      <p id="live-clock" class="text-zinc-400 text-sm mt-2 font-mono"></p>
     </div>
 
-    <div class="bg-white/90 backdrop-blur rounded-3xl shadow-xl border border-broccoli-100 p-6 sm:p-8">
-      <p class="text-center font-heading font-semibold text-broccoli-800 mb-4">Ingresa tu PIN para marcar</p>
-
-      <div class="flex justify-center gap-3 mb-6" id="pin-dots">
-        <span class="w-4 h-4 rounded-full border-2 border-broccoli-400"></span>
-        <span class="w-4 h-4 rounded-full border-2 border-broccoli-400"></span>
-        <span class="w-4 h-4 rounded-full border-2 border-broccoli-400"></span>
-        <span class="w-4 h-4 rounded-full border-2 border-broccoli-400"></span>
+    <!-- Teclado: fondo translucido real (bg-zinc-900/40), sin decoraciones -->
+    <div class="w-full max-w-md bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl flex flex-col items-center select-none">
+      <div class="text-center mb-6">
+        <p class="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-3">Ingresa tu PIN para marcar</p>
+        <div class="flex justify-center space-x-3" id="pin-dots">
+          <span class="w-3 h-3 rounded-full border border-white/30 bg-transparent"></span>
+          <span class="w-3 h-3 rounded-full border border-white/30 bg-transparent"></span>
+          <span class="w-3 h-3 rounded-full border border-white/30 bg-transparent"></span>
+          <span class="w-3 h-3 rounded-full border border-white/30 bg-transparent"></span>
+        </div>
       </div>
 
       <form id="pin-form" hx-post="/clock" hx-target="#clock-result" hx-swap="innerHTML" hx-indicator="#pin-loading">
         <input type="hidden" name="pin" id="pin-input" value="">
       </form>
 
-      <div class="grid grid-cols-3 gap-3">
+      <div class="grid grid-cols-3 gap-3 w-full max-w-[280px] font-oswald">
         {% for n in [1,2,3,4,5,6,7,8,9] %}
         <button type="button" onclick="pressDigit('{{ n }}')"
-          class="pin-btn h-16 rounded-2xl bg-broccoli-50 hover:bg-broccoli-100 text-broccoli-800 text-2xl font-heading font-bold shadow-sm border border-broccoli-100">{{ n }}</button>
+          class="pin-btn py-4 bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl font-bold text-2xl active:scale-95 transition text-white">{{ n }}</button>
         {% endfor %}
         <button type="button" onclick="clearPin()"
-          class="pin-btn h-16 rounded-2xl bg-cauliflower-100 hover:bg-cauliflower-200 text-broccoli-700 text-sm font-heading font-bold shadow-sm border border-broccoli-100">Borrar</button>
+          class="pin-btn py-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-2xl font-sans font-bold text-xs text-red-400 active:scale-95 transition">Borrar</button>
         <button type="button" onclick="pressDigit('0')"
-          class="pin-btn h-16 rounded-2xl bg-broccoli-50 hover:bg-broccoli-100 text-broccoli-800 text-2xl font-heading font-bold shadow-sm border border-broccoli-100">0</button>
+          class="pin-btn py-4 bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl font-bold text-2xl active:scale-95 transition text-white">0</button>
         <button type="button" onclick="backspacePin()"
-          class="pin-btn h-16 rounded-2xl bg-cauliflower-100 hover:bg-cauliflower-200 text-broccoli-700 text-sm font-heading font-bold shadow-sm border border-broccoli-100">&larr;</button>
+          class="pin-btn py-4 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-2xl font-sans font-bold text-sm text-emerald-400 active:scale-95 transition">&larr;</button>
       </div>
 
-      <div id="pin-loading" class="htmx-indicator text-center text-broccoli-500 text-sm mt-4">Verificando...</div>
-      <div id="clock-result" class="mt-5"></div>
+      <div id="pin-loading" class="htmx-indicator text-center text-emerald-400 text-sm mt-4">Verificando...</div>
+      <div id="clock-result" class="mt-5 w-full"></div>
     </div>
 
-    <p class="text-center mt-6"><a href="/admin" class="text-broccoli-400 hover:text-broccoli-600 text-xs underline">Panel administrativo</a></p>
+    <a href="/admin" class="mt-6 text-[11px] text-zinc-500 hover:text-emerald-400 transition font-medium tracking-wide">Panel administrativo &rarr;</a>
   </div>
 </div>
 
@@ -58,9 +55,9 @@ function renderDots() {
   const dots = document.querySelectorAll("#pin-dots span");
   dots.forEach((d, i) => {
     if (i < pin.length) {
-      d.classList.add("bg-broccoli-500", "border-broccoli-500");
+      d.classList.add("bg-emerald-400", "border-emerald-400");
     } else {
-      d.classList.remove("bg-broccoli-500", "border-broccoli-500");
+      d.classList.remove("bg-emerald-400", "border-emerald-400");
     }
   });
 }

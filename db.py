@@ -1,3 +1,4 @@
+
 """Capa de datos SQLite para Empacadora San Juan.
 
 Sigue el mismo patron dependency-free que usamos en barberia-demo: todo
@@ -45,6 +46,7 @@ def init_db() -> None:
             full_name TEXT NOT NULL,
             pin_code TEXT NOT NULL UNIQUE,
             active INTEGER NOT NULL DEFAULT 1,
+            hourly_rate REAL,
             created_at TEXT NOT NULL
         );
         CREATE TABLE IF NOT EXISTS time_entries (
@@ -69,9 +71,45 @@ def init_db() -> None:
             password_hash TEXT NOT NULL,
             created_at TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            daily_target_boxes REAL,
+            unit_price REAL,
+            description TEXT,
+            unit_label TEXT,
+            active INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS packing_entries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_id INTEGER NOT NULL REFERENCES products(id),
+            entry_date TEXT NOT NULL,
+            boxes REAL NOT NULL,
+            kg REAL NOT NULL,
+            notes TEXT,
+            created_by TEXT,
+            created_at TEXT NOT NULL
+        );
         """
     )
     conn.commit()
+
+    # Migracion ligera: bases creadas antes de la tarifa por empleado
+    # no tienen esta columna. SQLite no soporta "ADD COLUMN IF NOT EXISTS",
+    # por eso revisamos PRAGMA table_info primero.
+    existing_cols = {row[1] for row in conn.execute("PRAGMA table_info(employees)").fetchall()}
+    if "hourly_rate" not in existing_cols:
+        conn.execute("ALTER TABLE employees ADD COLUMN hourly_rate REAL")
+        conn.commit()
+
+    product_cols = {row[1] for row in conn.execute("PRAGMA table_info(products)").fetchall()}
+    if "description" not in product_cols:
+        conn.execute("ALTER TABLE products ADD COLUMN description TEXT")
+        conn.commit()
+    if "unit_label" not in product_cols:
+        conn.execute("ALTER TABLE products ADD COLUMN unit_label TEXT")
+        conn.commit()
 
     if not _one(conn, "SELECT id FROM settings WHERE id = 1"):
         conn.execute(
@@ -132,12 +170,19 @@ def get_employee_by_pin(pin_code: str):
     return row
 
 
-def create_employee(full_name: str, pin_code: str | None = None) -> dict:
+def create_employee(full_name: str, pin_code: str | None = None, hourly_rate: float | None = None) -> dict:
+    """Crea un empleado. Si `pin_code` viene vacio, se genera uno unico al
+    azar (comportamiento original). Si el admin da un PIN manual y ya esta
+    en uso por otro empleado, se levanta ValueError con mensaje claro en
+    vez de dejar reventar el IntegrityError crudo de SQLite."""
     conn = get_conn()
     pin = pin_code or gen_unique_pin(conn)
+    if pin_code and _one(conn, "SELECT id FROM employees WHERE pin_code = ?", (pin,)):
+        conn.close()
+        raise ValueError(f"El PIN {pin} ya esta asignado a otro empleado. Elige uno diferente.")
     conn.execute(
-        "INSERT INTO employees (full_name, pin_code, active, created_at) VALUES (?, ?, 1, ?)",
-        (full_name, pin, datetime.now().isoformat()),
+        "INSERT INTO employees (full_name, pin_code, active, hourly_rate, created_at) VALUES (?, ?, 1, ?, ?)",
+        (full_name, pin, hourly_rate, datetime.now().isoformat()),
     )
     conn.commit()
     row = _one(conn, "SELECT * FROM employees WHERE pin_code = ?", (pin,))
@@ -145,12 +190,32 @@ def create_employee(full_name: str, pin_code: str | None = None) -> dict:
     return row
 
 
-def update_employee(employee_id: int, full_name: str, active: bool) -> None:
+def update_employee(employee_id: int, full_name: str, active: bool, hourly_rate: float | None = None) -> None:
     conn = get_conn()
     conn.execute(
-        "UPDATE employees SET full_name = ?, active = ? WHERE id = ?",
-        (full_name, 1 if active else 0, employee_id),
+        "UPDATE employees SET full_name = ?, active = ?, hourly_rate = ? WHERE id = ?",
+        (full_name, 1 if active else 0, hourly_rate, employee_id),
     )
+    conn.commit()
+    conn.close()
+
+
+def delete_employee(employee_id: int) -> None:
+    """Borra un empleado por completo -- SOLO si nunca ha marcado entrada.
+    Si ya tiene time_entries reales (historial de nomina), se rechaza con
+    ValueError: perder esos registros seria un problema legal/contable,
+    no un simple detalle de UI. Para ese caso el admin debe desactivarlo
+    (checkbox Activo) en vez de borrarlo -- conserva el historial pero
+    lo saca de la lista de gente que puede marcar."""
+    conn = get_conn()
+    count = _one(conn, "SELECT COUNT(*) as n FROM time_entries WHERE employee_id = ?", (employee_id,))["n"]
+    if count > 0:
+        conn.close()
+        raise ValueError(
+            f"No se puede eliminar: tiene {count} marcaje(s) registrado(s) (historial de nomina). "
+            "Desactivalo con el checkbox 'Activo' en su lugar."
+        )
+    conn.execute("DELETE FROM employees WHERE id = ?", (employee_id,))
     conn.commit()
     conn.close()
 
@@ -217,7 +282,7 @@ def get_entries_between(start_iso: str, end_iso: str):
     conn = get_conn()
     rows = _all(
         conn,
-        """SELECT time_entries.*, employees.full_name
+        """SELECT time_entries.*, employees.full_name, employees.hourly_rate AS employee_hourly_rate
            FROM time_entries JOIN employees ON employees.id = time_entries.employee_id
            WHERE time_entries.clock_in >= ? AND time_entries.clock_in < ?
            ORDER BY employees.full_name, time_entries.clock_in""",
@@ -315,3 +380,77 @@ def count_admin_users() -> int:
     n = _one(conn, "SELECT COUNT(*) AS n FROM admin_users")["n"]
     conn.close()
     return n
+
+
+# ── Products (catalogo de lo que se empaca) ───────────────────────────
+
+def get_products(include_inactive: bool = True):
+    conn = get_conn()
+    sql = "SELECT * FROM products"
+    if not include_inactive:
+        sql += " WHERE active = 1"
+    sql += " ORDER BY name"
+    rows = _all(conn, sql)
+    conn.close()
+    return rows
+
+
+def get_product(product_id: int):
+    conn = get_conn()
+    row = _one(conn, "SELECT * FROM products WHERE id = ?", (product_id,))
+    conn.close()
+    return row
+
+
+def create_product(name: str, daily_target_boxes: float | None, description: str | None = None, unit_label: str | None = None) -> None:
+    conn = get_conn()
+    conn.execute(
+        "INSERT INTO products (name, daily_target_boxes, description, unit_label, active, created_at) VALUES (?, ?, ?, ?, 1, ?)",
+        (name, daily_target_boxes, description, unit_label, datetime.now().isoformat()),
+    )
+    conn.commit()
+    conn.close()
+
+
+def update_product(product_id: int, name: str, daily_target_boxes: float | None, active: bool, description: str | None = None, unit_label: str | None = None) -> None:
+    conn = get_conn()
+    conn.execute(
+        "UPDATE products SET name = ?, daily_target_boxes = ?, description = ?, unit_label = ?, active = ? WHERE id = ?",
+        (name, daily_target_boxes, description, unit_label, 1 if active else 0, product_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+# ── Packing entries (lo que realmente se empaco cada dia) ─────────────
+
+def create_packing_entry(product_id: int, entry_date: str, boxes: float, kg: float, notes: str, created_by: str) -> None:
+    conn = get_conn()
+    conn.execute(
+        """INSERT INTO packing_entries (product_id, entry_date, boxes, kg, notes, created_by, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (product_id, entry_date, boxes, kg, notes or None, created_by, datetime.now().isoformat()),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_packing_entries_for_date(entry_date: str):
+    conn = get_conn()
+    rows = _all(
+        conn,
+        """SELECT packing_entries.*, products.name AS product_name, products.daily_target_boxes, products.description, products.unit_label
+           FROM packing_entries JOIN products ON products.id = packing_entries.product_id
+           WHERE packing_entries.entry_date = ?
+           ORDER BY products.name, packing_entries.created_at""",
+        (entry_date,),
+    )
+    conn.close()
+    return rows
+
+
+def delete_packing_entry(entry_id: int) -> None:
+    conn = get_conn()
+    conn.execute("DELETE FROM packing_entries WHERE id = ?", (entry_id,))
+    conn.commit()
+    conn.close()
