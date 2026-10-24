@@ -209,6 +209,14 @@
   }, { threshold: 0.2 });
   $$(".reveal").forEach((el) => observer.observe(el));
 
+  // ───────── WhatsApp flotante: se esconde cuando ya se ven los botones de contacto ─────────
+  const waFloat = $("#wa-float");
+  if (waFloat) {
+    new IntersectionObserver(([entry]) => {
+      waFloat.classList.toggle("is-hidden", entry.isIntersecting);
+    }).observe($(".cta__actions"));
+  }
+
   // ───────── arranque ─────────
   addEventListener("scroll", requestRender, { passive: true });
   addEventListener("resize", layout);

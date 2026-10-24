@@ -12,4 +12,7 @@ COPY . .
 ENV DB_PATH=/data/empacadora.db
 
 EXPOSE 8080
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+# --no-proxy-headers: que uvicorn no reescriba la IP del cliente con
+# X-Forwarded-For (lo controla quien hace la peticion). La IP real para el
+# rate limit sale de Fly-Client-IP, ver security.client_ip().
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--no-proxy-headers"]

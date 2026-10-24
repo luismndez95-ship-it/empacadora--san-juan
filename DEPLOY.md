@@ -13,10 +13,8 @@ Windows (PowerShell):
 iwr https://fly.io/install.ps1 -useb | iex
 ```
 
-Si `winget`/`iwr` fallan por proxy corporativo, usa las variables de
-`HTTP_PROXY`/`HTTPS_PROXY` de sysproxy.wal-mart.com (ver notas internas),
-o instala flyctl desde tu red personal (este proyecto es 100% ajeno a
-Walmart, no hace falta VPN para el hosting en si).
+Si `winget`/`iwr` fallan detras de un proxy, configura `HTTP_PROXY`/`HTTPS_PROXY`
+o instala flyctl desde otra red.
 
 ## 2. Login y crear la app
 
@@ -46,8 +44,9 @@ flyctl secrets set ADMIN_USERNAME=admin
 flyctl secrets set ADMIN_PASSWORD=una-contrasena-real-y-fuerte
 ```
 
-Contacto de la landing publica (`/landing`). Sin estas dos, la seccion de
-contacto se muestra sin botones:
+Contacto de la landing publica (`/`). Sin estas dos, la seccion de
+contacto se muestra sin botones (un numero de WhatsApp incompleto tambien
+se ignora):
 
 ```bat
 flyctl secrets set LANDING_WHATSAPP=506XXXXXXXX
@@ -72,8 +71,10 @@ flyctl status
 flyctl logs
 ```
 
-Abre la URL que te da Fly (`https://empacadora-san-juan.fly.dev`) --
-el kiosko debe cargar de inmediato, sin espera de "cold start".
+Abre la URL que te da Fly (`https://empacadora-san-juan.fly.dev`): la
+raiz muestra la landing y `/kiosko` el kiosko, que debe cargar de
+inmediato, sin espera de "cold start". En la tablet de planta deja
+`/kiosko` como pagina de inicio.
 
 ## Actualizaciones futuras
 
