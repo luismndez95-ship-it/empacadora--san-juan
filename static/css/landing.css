@@ -263,6 +263,12 @@ h2 em, .volcano__intro em { font-style: normal; color: var(--mint); }
 @media (max-width: 800px) {
   .topbar nav { display: none; }
   .wa-float { display: flex; }
+  /* Galeria horizontal en movil: tarjetas verticales que llenan casi todo el ancho */
+  .gallery__track { gap: 2.5rem; padding: 0 1.5rem; }
+  .panel--intro { width: 78vw; }
+  .card { width: min(80vw, 56svh); aspect-ratio: 4 / 5; border-radius: 22px; }
+  .panel .num { font-size: 8rem; }
+  .gallery__bar { bottom: 3vh; }
   .volcano__copy { grid-template-columns: 1fr; bottom: 6vh; }
   .counter { grid-column: 1; grid-row: auto; text-align: left; }
   .counter strong { font-size: 4.5rem; }
