@@ -20,7 +20,6 @@
 
   const root = document.documentElement;
   const reducedQuery = matchMedia("(prefers-reduced-motion: reduce)");
-  const narrowQuery = matchMedia("(max-width: 800px)");
 
   // ───────── escenas: cada fabrica devuelve update(p) ─────────
   function makeHero(el) {
@@ -174,10 +173,13 @@
     }
   };
 
-  // ───────── modo (movimiento reducido / movil) y medidas ─────────
+  // ───────── modo (movimiento reducido) y medidas ─────────
+  // La galeria se mueve en horizontal tambien en movil; solo se apila con movimiento reducido.
+  let lastWidth = innerWidth;
   function layout() {
+    lastWidth = innerWidth;
     root.classList.toggle("reduced", reducedQuery.matches);
-    root.classList.toggle("stack-gallery", reducedQuery.matches || narrowQuery.matches);
+    root.classList.toggle("stack-gallery", reducedQuery.matches);
     scenes.forEach((s) => s.update.measure && s.update.measure());
     measureMarquee();
     render(true);
@@ -219,9 +221,10 @@
 
   // ───────── arranque ─────────
   addEventListener("scroll", requestRender, { passive: true });
-  addEventListener("resize", layout);
+  // En movil la barra de direcciones cambia el alto al hacer scroll; re-medir ahi
+  // haria saltar la galeria, asi que solo se re-mide si cambia el ancho.
+  addEventListener("resize", () => { if (innerWidth !== lastWidth) layout(); });
   reducedQuery.addEventListener("change", layout);
-  narrowQuery.addEventListener("change", layout);
   document.fonts.ready.then(layout);
   layout();
 })();
