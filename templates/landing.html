@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ business_name }} · Hortalizas de las faldas del Irazú</title>
+<meta name="description" content="Brócoli, coliflor y papa empacados en San Juan de Chicua, Cartago, al pie del Volcán Irazú.">
+<meta property="og:title" content="{{ business_name }}">
+<meta property="og:description" content="De la tierra volcánica a tu mesa.">
+<meta property="og:image" content="/static/img/landing/hero.webp">
+<meta name="theme-color" content="#0a0f10">
+<link rel="icon" href="/static/img/landing/logo.webp" type="image/webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/landing.css">
+{# Las fotos se definen una sola vez (DRY): la galeria las recorre en bucle. #}
+{% set products = [
+  ("Brócoli", "brocoli", "Verde profundo, cabeza compacta y empacado con cuidado para que llegue como salió del campo."),
+  ("Coliflor", "coliflor", "Blanca y firme, con sus hojas verdes cuidándola hasta el último momento."),
+  ("Papa", "papa", "En malla, lista para ir directo a la góndola de tu negocio."),
+] %}
+{% set steps = [
+  ("Campo", "Se cosecha a mano, surco por surco, al pie del volcán."),
+  ("Selección", "Cada pieza se revisa: color, firmeza y tamaño."),
+  ("Empaque", "Cesta limpia, malla o film: cada producto con su empaque."),
+  ("Entrega", "Sale de la planta rumbo a tu negocio, fresco."),
+] %}
+{% set name_top, name_bottom = (business_name.split(' ', 1) + [''])[:2] %}
+</head>
+<body>
+<div class="progress" id="progress" aria-hidden="true"></div>
+
+<header class="topbar" id="topbar">
+  <a class="brand" href="#inicio" aria-label="{{ business_name }}, volver al inicio">
+    <img src="/static/img/landing/logo.webp" alt="" width="34" height="30">
+    <span>E.S.J.</span>
+  </a>
+  <nav aria-label="Secciones">
+    <a href="#volcan">Volcán</a>
+    <a href="#cosecha">Cosecha</a>
+    <a href="#proceso">Proceso</a>
+    <a href="#contacto">Contacto</a>
+  </nav>
+</header>
+
+<main>
+  <!-- 1 · PORTADA -->
+  <section class="scene hero" data-scene="hero" id="inicio" aria-label="Portada">
+    <div class="stick">
+      <div class="hero__bg"><img src="/static/img/landing/hero.webp" alt="Campo de coliflor al amanecer con el volcán Irazú de fondo" fetchpriority="high"></div>
+      <div class="hero__mist" aria-hidden="true"></div>
+      <div class="hero__shade" aria-hidden="true"></div>
+      <div class="hero__content">
+        <img class="hero__logo" src="/static/img/landing/logo.webp" alt="" width="120" height="105">
+        <p class="eyebrow">Faldas del Volcán Irazú · Cartago, Costa Rica</p>
+        <h1 class="hero__title" aria-label="{{ business_name }}">
+          <span class="line" data-split>{{ name_top }}</span>
+          <span class="line line--accent" data-split>{{ name_bottom }}</span>
+        </h1>
+        <p class="hero__tagline">De la tierra volcánica a tu mesa.</p>
+      </div>
+      <div class="hero__fade" aria-hidden="true"></div>
+      <div class="scroll-cue" aria-hidden="true"><span>Desliza</span><i></i></div>
+    </div>
+  </section>
+
+  <!-- 2 · VOLCÁN -->
+  <section class="scene volcano" data-scene="volcano" id="volcan" aria-label="Tierra volcánica">
+    <div class="stick">
+      <p class="volcano__intro" aria-hidden="true">Todo empieza<br><em>en el volcán.</em></p>
+      <div class="volcano__window">
+        <img src="/static/img/landing/volcan.webp" alt="Cráter del volcán Irazú con su laguna verde sobre un mar de nubes" loading="lazy">
+        <div class="volcano__shade"></div>
+      </div>
+      <div class="volcano__copy">
+        <p class="chapter" data-r>01 — Tierra volcánica</p>
+        <h2 data-r>Suelo de ceniza.<br>Aire de nube.</h2>
+        <p class="lead" data-r>Cultivamos en las faldas del Irazú, donde la altura y el suelo volcánico dan hortalizas con carácter.</p>
+        <p class="counter" data-r><strong data-counter data-to="3432">3.432</strong><span>metros · la cima del Irazú</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · COSECHA (scroll horizontal) -->
+  <section class="scene gallery" data-scene="gallery" id="cosecha" aria-label="Productos">
+    <div class="stick">
+      <div class="gallery__track">
+        <div class="panel panel--intro">
+          <p class="chapter">02 — Cosecha</p>
+          <h2>Lo que sale<br>de nuestra<br><em>tierra.</em></h2>
+          <p class="hint" aria-hidden="true">Sigue deslizando →</p>
+        </div>
+        {% for title, image, text in products %}
+        <article class="panel">
+          <span class="num" aria-hidden="true">0{{ loop.index }}</span>
+          <figure class="card">
+            <img src="/static/img/landing/{{ image }}.webp" alt="{{ title }} empacado en la planta" loading="lazy">
+            <figcaption>
+              <h3>{{ title }}</h3>
+              <p>{{ text }}</p>
+            </figcaption>
+          </figure>
+        </article>
+        {% endfor %}
+      </div>
+      <div class="gallery__bar" aria-hidden="true"><i></i></div>
+    </div>
+  </section>
+
+  <!-- 4 · PROCESO -->
+  <section class="scene process" data-scene="process" id="proceso" aria-label="Del campo a tu mesa">
+    <div class="stick">
+      <div class="process__left">
+        <p class="chapter">03 — Del campo a tu mesa</p>
+        <p class="process__num" aria-hidden="true" data-step-number>01</p>
+        <ol class="steps">
+          {% for title, text in steps %}
+          <li class="step" data-step>
+            <h3>{{ title }}</h3>
+            <p>{{ text }}</p>
+          </li>
+          {% endfor %}
+        </ol>
+      </div>
+      <div class="process__right" aria-hidden="true">
+        <div class="glow"></div>
+        <img class="crate" src="/static/img/landing/cesta.webp" alt="" loading="lazy">
+      </div>
+      <div class="timeline" aria-hidden="true">
+        <div class="timeline__line"><i></i></div>
+        <div class="timeline__nodes">
+          {% for title, _ in steps %}<span data-node>{{ title }}</span>{% endfor %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · CINTA DE TEXTO -->
+  {% macro marquee_group() %}<div class="marquee__group">{% for _ in range(4) %}<span>Fresco</span><b></b><span class="outline">Del volcán</span><b></b><span>Cartago</span><b></b><span class="outline">Costa Rica</span><b></b>{% endfor %}</div>{% endmacro %}
+  <section class="marquee" aria-hidden="true">
+    {% for direction in (-1, 1) %}
+    <div class="marquee__line" data-dir="{{ direction }}">{{ marquee_group() }}{{ marquee_group() }}</div>
+    {% endfor %}
+  </section>
+
+  <!-- 6 · CONTACTO -->
+  <section class="cta" id="contacto" aria-label="Contacto">
+    <img class="cta__mark" src="/static/img/landing/logo.webp" alt="" aria-hidden="true">
+    <p class="chapter reveal">04 — Hablemos</p>
+    <h2 class="reveal">¿Listo para recibir<br><em>lo mejor del Irazú?</em></h2>
+    <div class="cta__actions reveal">
+      {% if whatsapp %}<a class="btn" href="https://wa.me/{{ whatsapp }}?text=Hola%2C%20quiero%20cotizar%20un%20pedido">Escríbenos por WhatsApp</a>{% endif %}
+      {% if email %}<a class="btn btn--ghost" href="mailto:{{ email }}">{{ email }}</a>{% endif %}
+    </div>
+    <footer class="reveal">
+      <p>{{ business_name }} · San Juan de Chicua, Cartago · Costa Rica</p>
+      <p class="credit">Sitio creado por Veltyk</p>
+    </footer>
+  </section>
+</main>
+
+<script src="/static/js/landing.js" defer></script>
+</body>
+</html>

@@ -70,6 +70,20 @@ def startup() -> None:
 app.include_router(admin_routes.router)
 
 
+# ─────────────────────────── Landing publica ───────────────────────────
+
+@app.get("/landing")
+def landing(request: Request):
+    settings = db.get_settings()
+    # Contacto opcional (variables de entorno): sin ellas, el boton no se muestra.
+    whatsapp = "".join(ch for ch in os.environ.get("LANDING_WHATSAPP", "") if ch.isdigit())
+    return templates.TemplateResponse(request, "landing.html", {
+        "business_name": settings["business_name"],
+        "whatsapp": whatsapp,
+        "email": os.environ.get("LANDING_EMAIL", "").strip(),
+    })
+
+
 # ─────────────────────────── Kiosko publico ───────────────────────────
 
 @app.get("/")
