@@ -9,8 +9,11 @@ Construido por **Veltyk** como proyecto cliente.
 
 ## Que hace
 
-- **Kiosko publico (`/`)**: cada trabajador teclea su PIN de 4 digitos
-  en una tablet/pantalla en planta para marcar entrada o salida.
+- **Landing publica (`/`)**: pagina de la empacadora para clientes, con
+  contacto por WhatsApp/correo (opcional, ver `.env.example`).
+- **Kiosko (`/kiosko`)**: cada trabajador teclea su PIN de 4 digitos
+  en una tablet/pantalla en planta para marcar entrada o salida. La tablet
+  debe quedar con `/kiosko` como pagina de inicio o favorito.
 - **Panel admin (`/admin`)**: login compartido (usuario + contraseña,
   extensible a mas administradores desde Configuracion).
   - **Empleados**: crear, activar/desactivar, reasignar PIN.
@@ -38,8 +41,8 @@ REM edita .env con una contraseña real de admin
 .venv\Scripts\python.exe -m uvicorn main:app --reload
 ```
 
-Abre `http://127.0.0.1:8000` para el kiosko, `http://127.0.0.1:8000/admin`
-para el panel (usuario/contraseña de `.env`).
+Abre `http://127.0.0.1:8000` para la landing, `http://127.0.0.1:8000/kiosko`
+para el kiosko y `http://127.0.0.1:8000/admin` para el panel (usuario/contraseña de `.env`).
 
 ## Estructura
 

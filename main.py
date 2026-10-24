@@ -72,21 +72,44 @@ app.include_router(admin_routes.router)
 
 # ─────────────────────────── Landing publica ───────────────────────────
 
-@app.get("/landing")
+def _landing_whatsapp() -> str:
+    """Numero de WhatsApp de la landing, o "" si falta o esta incompleto.
+
+    Formato internacional sin "+": codigo de pais + numero (10 a 15 digitos).
+    Asi un valor de ejemplo como 506XXXXXXXX no termina en un boton roto.
+    """
+    digits = "".join(ch for ch in os.environ.get("LANDING_WHATSAPP", "") if ch.isdigit())
+    return digits if 10 <= len(digits) <= 15 else ""
+
+
+def _site_url(request: Request) -> str:
+    """URL base absoluta (para og:image). Detras de Fly el trafico llega por
+    HTTP interno, pero hacia afuera siempre se sirve por HTTPS."""
+    scheme = "https" if os.environ.get("FLY_APP_NAME") else request.url.scheme
+    return f"{scheme}://{request.url.netloc}"
+
+
+@app.get("/")
 def landing(request: Request):
     settings = db.get_settings()
     # Contacto opcional (variables de entorno): sin ellas, el boton no se muestra.
-    whatsapp = "".join(ch for ch in os.environ.get("LANDING_WHATSAPP", "") if ch.isdigit())
     return templates.TemplateResponse(request, "landing.html", {
         "business_name": settings["business_name"],
-        "whatsapp": whatsapp,
+        "whatsapp": _landing_whatsapp(),
         "email": os.environ.get("LANDING_EMAIL", "").strip(),
+        "site_url": _site_url(request),
     })
+
+
+@app.get("/landing")
+def landing_old_url():
+    # La landing vivia aqui antes de pasar a la raiz; no romper enlaces viejos.
+    return RedirectResponse("/", status_code=301)
 
 
 # ─────────────────────────── Kiosko publico ───────────────────────────
 
-@app.get("/")
+@app.get("/kiosko")
 def kiosk(request: Request):
     settings = db.get_settings()
     return templates.TemplateResponse(request, "kiosk.html", {
