@@ -46,6 +46,14 @@ flyctl secrets set ADMIN_USERNAME=admin
 flyctl secrets set ADMIN_PASSWORD=una-contrasena-real-y-fuerte
 ```
 
+Contacto de la landing publica (`/landing`). Sin estas dos, la seccion de
+contacto se muestra sin botones:
+
+```bat
+flyctl secrets set LANDING_WHATSAPP=506XXXXXXXX
+flyctl secrets set LANDING_EMAIL=correo@ejemplo.com
+```
+
 Genera `SESSION_SECRET` con:
 ```bat
 python -c "import secrets; print(secrets.token_hex(32))"
